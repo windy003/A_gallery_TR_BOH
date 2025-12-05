@@ -304,4 +304,42 @@ public class PhotoManager {
 
         return false;
     }
+
+    /**
+     * 获取需要阅读消化的图片数量
+     * 统计所有阅读时间在当前时刻之前的图片数量
+     * 比如现在是2025/12/5 17:51，文件夹"2025/12/2 16:00-17:00"的阅读时间是12/5 17:00
+     * 如果当前时间 > 阅读时间的结束时间，这些图片就需要阅读消化
+     *
+     * @return 需要阅读消化的图片总数
+     */
+    public int getExpiredPhotoCount() {
+        List<Photo> allPhotos = getAllPhotos();
+        Calendar now = Calendar.getInstance();
+        int count = 0;
+
+        for (Photo photo : allPhotos) {
+            Calendar originalCalendar = Calendar.getInstance();
+            originalCalendar.setTimeInMillis(photo.getDateAdded() * 1000);
+
+            // 计算阅读日期（原始日期 + 3天）
+            Calendar readCalendar = (Calendar) originalCalendar.clone();
+            readCalendar.add(Calendar.DAY_OF_YEAR, DELAY_DAYS);
+
+            // 设置时间为原始时间的下一个小时（时间段的结束时间）
+            int hour = originalCalendar.get(Calendar.HOUR_OF_DAY);
+            int nextHour = hour + 1; // 移除 % 24, 让Calendar自动处理进位
+            readCalendar.set(Calendar.HOUR_OF_DAY, nextHour);
+            readCalendar.set(Calendar.MINUTE, 0);
+            readCalendar.set(Calendar.SECOND, 0);
+            readCalendar.set(Calendar.MILLISECOND, 0); // 确保毫秒为0
+
+            // 如果当前时间 > 阅读时间的结束时间，计数加1
+            if (now.after(readCalendar)) {
+                count++;
+            }
+        }
+
+        return count;
+    }
 }

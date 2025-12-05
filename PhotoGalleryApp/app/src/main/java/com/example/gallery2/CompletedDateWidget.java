@@ -39,18 +39,26 @@ public class CompletedDateWidget extends AppWidgetProvider {
         PhotoManager photoManager = new PhotoManager(context);
         boolean hasExpired = photoManager.hasExpiredFolders();
 
+        // 统计需要阅读消化的图片数量
+        int photoCount = photoManager.getExpiredPhotoCount();
+
         // 构建widget的RemoteViews
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_completed_date);
 
         if (hasExpired) {
-            // 有过期文件夹：显示has.png图片
-            views.setImageViewResource(R.id.widget_icon, R.drawable.has);
-            views.setViewVisibility(R.id.widget_icon, android.view.View.VISIBLE);
+            // 有过期文件夹：显示图片数量 "本机X个"
+            views.setViewVisibility(R.id.widget_icon, android.view.View.GONE);
             views.setViewVisibility(R.id.widget_date_text, android.view.View.GONE);
-            Log.d("CompletedDateWidget", "有过期文件夹，显示has图片");
+
+            String countText = String.format(Locale.getDefault(), "本机%d个", photoCount);
+            views.setTextViewText(R.id.widget_photo_count, countText);
+            views.setViewVisibility(R.id.widget_photo_count, android.view.View.VISIBLE);
+
+            Log.d("CompletedDateWidget", "有过期文件夹，显示图片数量: " + photoCount);
         } else {
             // 没有过期文件夹：显示当前时间，小时为红色
             views.setViewVisibility(R.id.widget_icon, android.view.View.GONE);
+            views.setViewVisibility(R.id.widget_photo_count, android.view.View.GONE);
 
             // 获取当前时间
             Calendar now = Calendar.getInstance();
