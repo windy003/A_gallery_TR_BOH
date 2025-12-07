@@ -105,36 +105,47 @@ public class MainActivity extends AppCompatActivity {
             allPhotosFolder.addPhoto(photo);
         }
 
-        // 使用PhotoManager的新方法：根据DATE_ADDED+3天自动分组
-        java.util.Map<String, List<Photo>> photosByDate = photoManager.getPhotosByDisplayDate();
+        // 创建"已到期"文件夹，只包含已到期的图片
+        Folder expiredFolder = new Folder("expired", "已到期");
+        expiredFolder.setDateFolder(false);
 
-        // 为日期文件夹创建一个临时列表
-        List<Folder> dateFolders = new ArrayList<>();
+        // 计算过期时间线（用于调试输出）
+        java.util.Calendar expirationTime = java.util.Calendar.getInstance();
+        expirationTime.add(java.util.Calendar.DAY_OF_YEAR, -3);
+        expirationTime.set(java.util.Calendar.MINUTE, 0);
+        expirationTime.set(java.util.Calendar.SECOND, 0);
+        expirationTime.set(java.util.Calendar.MILLISECOND, 0);
 
-        for (String date : photosByDate.keySet()) {
-            List<Photo> photos = photosByDate.get(date);
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss", java.util.Locale.getDefault());
+        android.util.Log.d("MainActivity", "过期时间线: " + sdf.format(expirationTime.getTime()));
 
-            if (photos != null && !photos.isEmpty()) {
-                Folder folder = new Folder(date, date);
-                folder.setDateFolder(true);
-                for (Photo photo : photos) {
-                    folder.addPhoto(photo);
+        // 遍历所有图片，筛选出已到期的图片
+        for (Photo photo : allPhotos) {
+            List<Photo> singlePhotoList = new ArrayList<>();
+            singlePhotoList.add(photo);
+
+            // 检查这张照片是否已到期
+            if (photoManager.isFolderExpired(singlePhotoList)) {
+                // 输出调试信息
+                long lastModified = photo.getLastModified();
+                if (lastModified == 0) {
+                    lastModified = photo.getDateAdded() * 1000;
                 }
-                dateFolders.add(folder);
+                java.util.Calendar photoTime = java.util.Calendar.getInstance();
+                photoTime.setTimeInMillis(lastModified);
+                android.util.Log.d("MainActivity", "已到期图片: " + photo.getName() +
+                    ", 创建时间: " + sdf.format(photoTime.getTime()) +
+                    " (添加时间: " + sdf.format(new java.util.Date(photo.getDateAdded() * 1000)) + ")");
+
+                expiredFolder.addPhoto(photo);
             }
         }
 
-        // 关键：根据文件夹内照片的实际日期进行排序（降序，最新的在前）
-        java.util.Collections.sort(dateFolders, (f1, f2) -> {
-            // 每个文件夹里的照片时间都差不多，取第一个作为代表即可
-            long d1 = f1.getPhotos().get(0).getDateAdded();
-            long d2 = f2.getPhotos().get(0).getDateAdded();
-            return Long.compare(d1, d2); // d1 vs d2 实现升序 (最旧的在前)
-        });
-
-        // 将“所有图片”文件夹放在首位，然后添加排序后的日期文件夹
+        // 只添加两个文件夹：所有图片和已到期
         folders.add(allPhotosFolder);
-        folders.addAll(dateFolders);
+        if (expiredFolder.getPhotoCount() > 0) {
+            folders.add(expiredFolder);
+        }
 
         folderAdapter = new FolderAdapter(this, folders, folder -> {
             Intent intent = new Intent(MainActivity.this, GalleryActivity.class);

@@ -11,6 +11,7 @@ public class Photo implements Serializable {
     private String path;
     private String name;
     private long dateAdded;
+    private long lastModified; // 文件最后修改时间(毫秒)
     private long size;
     private int mediaType; // 1=图片, 2=视频
     private long duration; // 视频时长(毫秒)
@@ -21,6 +22,18 @@ public class Photo implements Serializable {
         this.path = path;
         this.name = name;
         this.dateAdded = dateAdded;
+        this.size = size;
+        this.mediaType = mediaType;
+        this.duration = duration;
+        this.lastModified = 0; // 默认值
+    }
+
+    public Photo(long id, String path, String name, long dateAdded, long lastModified, long size, int mediaType, long duration) {
+        this.id = id;
+        this.path = path;
+        this.name = name;
+        this.dateAdded = dateAdded;
+        this.lastModified = lastModified;
         this.size = size;
         this.mediaType = mediaType;
         this.duration = duration;
@@ -40,6 +53,14 @@ public class Photo implements Serializable {
 
     public long getDateAdded() {
         return dateAdded;
+    }
+
+    public long getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(long lastModified) {
+        this.lastModified = lastModified;
     }
 
     public long getSize() {

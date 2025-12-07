@@ -599,16 +599,21 @@ public class ImageViewerActivity extends AppCompatActivity {
         // 格式化日期时间
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
 
-        // 创建时间（DATE_ADDED）
-        String dateAdded = dateFormat.format(new Date(currentPhoto.getDateAdded() * 1000));
-
-        // 修改时间（从文件获取）
-        String dateModified = "未知";
-        File file = new File(currentPhoto.getPath());
-        if (file.exists()) {
-            long lastModified = file.lastModified();
-            dateModified = dateFormat.format(new Date(lastModified));
+        // 创建时间（使用 lastModified，即文件的真实创建时间）
+        String createdTime = "未知";
+        long lastModified = currentPhoto.getLastModified();
+        if (lastModified > 0) {
+            createdTime = dateFormat.format(new Date(lastModified));
+        } else {
+            // 如果 lastModified 为 0，从文件重新读取
+            File file = new File(currentPhoto.getPath());
+            if (file.exists()) {
+                createdTime = dateFormat.format(new Date(file.lastModified()));
+            }
         }
+
+        // 添加时间（DATE_ADDED，文件被扫描添加到系统的时间）
+        String dateAdded = dateFormat.format(new Date(currentPhoto.getDateAdded() * 1000));
 
         // 文件路径
         String path = currentPhoto.getPath();
@@ -616,8 +621,8 @@ public class ImageViewerActivity extends AppCompatActivity {
         // 构建详情信息
         StringBuilder details = new StringBuilder();
         details.append("文件名称：\n").append(currentPhoto.getName()).append("\n\n");
-        details.append("创建时间：\n").append(dateAdded).append("\n\n");
-        details.append("修改时间：\n").append(dateModified).append("\n\n");
+        details.append("创建时间：\n").append(createdTime).append("\n\n");
+        details.append("添加时间：\n").append(dateAdded).append("\n\n");
         details.append("文件路径：\n").append(path);
 
         // 显示对话框

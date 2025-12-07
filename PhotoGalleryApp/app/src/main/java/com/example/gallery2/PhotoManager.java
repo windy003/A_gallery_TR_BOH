@@ -61,7 +61,19 @@ public class PhotoManager {
 
                 // 只扫描指定的两个目录
                 if (isInTargetDirectory(path)) {
-                    Photo photo = new Photo(id, path, name, dateAdded, size, Photo.TYPE_IMAGE, 0);
+                    // 读取文件的最后修改时间
+                    long lastModified = 0;
+                    try {
+                        java.io.File file = new java.io.File(path);
+                        if (file.exists()) {
+                            lastModified = file.lastModified();
+                        }
+                    } catch (Exception e) {
+                        // 如果读取失败，使用 dateAdded 作为备用
+                        lastModified = dateAdded * 1000;
+                    }
+
+                    Photo photo = new Photo(id, path, name, dateAdded, lastModified, size, Photo.TYPE_IMAGE, 0);
                     photo.setUri(Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id)));
                     photos.add(photo);
                 }
@@ -114,7 +126,19 @@ public class PhotoManager {
 
                 // 只扫描指定的两个目录
                 if (isInTargetDirectory(path)) {
-                    Photo video = new Photo(id, path, name, dateAdded, size, Photo.TYPE_VIDEO, duration);
+                    // 读取文件的最后修改时间
+                    long lastModified = 0;
+                    try {
+                        java.io.File file = new java.io.File(path);
+                        if (file.exists()) {
+                            lastModified = file.lastModified();
+                        }
+                    } catch (Exception e) {
+                        // 如果读取失败，使用 dateAdded 作为备用
+                        lastModified = dateAdded * 1000;
+                    }
+
+                    Photo video = new Photo(id, path, name, dateAdded, lastModified, size, Photo.TYPE_VIDEO, duration);
                     video.setUri(Uri.withAppendedPath(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, String.valueOf(id)));
                     videos.add(video);
                 }
@@ -270,34 +294,37 @@ public class PhotoManager {
     }
 
     /**
-     * 检测是否有阅读时间在当前时刻之前的文件夹
-     * 比如现在是2025/12/5 12:11，文件夹"2025/12/2-5 11:00-12:00"的阅读时间是12/5 12:00
-     * 如果当前时间 > 阅读时间的结束时间，则认为有过期文件夹
+     * 检测是否有已到期的照片
+     * 到期判断：照片创建时间(lastModified) < (当前时间 - 3天)，按小时计算
+     * 例如：当前时间 2025/12/7 17:08，则 2025/12/4 17:00 之前创建的照片为已到期
      *
-     * @return 是否有过期的文件夹
+     * @return 是否有过期的照片
      */
     public boolean hasExpiredFolders() {
         List<Photo> allPhotos = getAllPhotos();
-        Calendar now = Calendar.getInstance();
+
+        // 获取当前时间，并减去3天
+        Calendar expirationTime = Calendar.getInstance();
+        expirationTime.add(Calendar.DAY_OF_YEAR, -DELAY_DAYS);
+
+        // 将分钟、秒、毫秒设为0，按小时计算
+        expirationTime.set(Calendar.MINUTE, 0);
+        expirationTime.set(Calendar.SECOND, 0);
+        expirationTime.set(Calendar.MILLISECOND, 0);
 
         for (Photo photo : allPhotos) {
-            Calendar originalCalendar = Calendar.getInstance();
-            originalCalendar.setTimeInMillis(photo.getDateAdded() * 1000);
+            // 使用文件最后修改时间（即创建时间）
+            long lastModified = photo.getLastModified();
+            if (lastModified == 0) {
+                // 如果 lastModified 为 0，使用 dateAdded 作为备用
+                lastModified = photo.getDateAdded() * 1000;
+            }
 
-            // 计算阅读日期（原始日期 + 3天）
-            Calendar readCalendar = (Calendar) originalCalendar.clone();
-            readCalendar.add(Calendar.DAY_OF_YEAR, DELAY_DAYS);
+            Calendar photoTime = Calendar.getInstance();
+            photoTime.setTimeInMillis(lastModified);
 
-            // 设置时间为原始时间的下一个小时（时间段的结束时间）
-            int hour = originalCalendar.get(Calendar.HOUR_OF_DAY);
-            int nextHour = hour + 1; // 移除 % 24, 让Calendar自动处理进位
-            readCalendar.set(Calendar.HOUR_OF_DAY, nextHour);
-            readCalendar.set(Calendar.MINUTE, 0);
-            readCalendar.set(Calendar.SECOND, 0);
-            readCalendar.set(Calendar.MILLISECOND, 0); // 确保毫秒为0
-
-            // 如果当前时间 > 阅读时间的结束时间，说明有过期文件夹
-            if (now.after(readCalendar)) {
+            // 如果照片时间 < 过期时间，说明有过期照片
+            if (photoTime.before(expirationTime)) {
                 return true;
             }
         }
@@ -307,39 +334,84 @@ public class PhotoManager {
 
     /**
      * 获取需要阅读消化的图片数量
-     * 统计所有阅读时间在当前时刻之前的图片数量
-     * 比如现在是2025/12/5 17:51，文件夹"2025/12/2 16:00-17:00"的阅读时间是12/5 17:00
-     * 如果当前时间 > 阅读时间的结束时间，这些图片就需要阅读消化
+     * 到期判断：照片创建时间(lastModified) < (当前时间 - 3天)，按小时计算
+     * 例如：当前时间 2025/12/7 17:08，则 2025/12/4 17:00 之前创建的照片为已到期
      *
      * @return 需要阅读消化的图片总数
      */
     public int getExpiredPhotoCount() {
         List<Photo> allPhotos = getAllPhotos();
-        Calendar now = Calendar.getInstance();
+
+        // 获取当前时间，并减去3天
+        Calendar expirationTime = Calendar.getInstance();
+        expirationTime.add(Calendar.DAY_OF_YEAR, -DELAY_DAYS);
+
+        // 将分钟、秒、毫秒设为0，按小时计算
+        expirationTime.set(Calendar.MINUTE, 0);
+        expirationTime.set(Calendar.SECOND, 0);
+        expirationTime.set(Calendar.MILLISECOND, 0);
+
         int count = 0;
-
         for (Photo photo : allPhotos) {
-            Calendar originalCalendar = Calendar.getInstance();
-            originalCalendar.setTimeInMillis(photo.getDateAdded() * 1000);
+            // 使用文件最后修改时间（即创建时间）
+            long lastModified = photo.getLastModified();
+            if (lastModified == 0) {
+                // 如果 lastModified 为 0，使用 dateAdded 作为备用
+                lastModified = photo.getDateAdded() * 1000;
+            }
 
-            // 计算阅读日期（原始日期 + 3天）
-            Calendar readCalendar = (Calendar) originalCalendar.clone();
-            readCalendar.add(Calendar.DAY_OF_YEAR, DELAY_DAYS);
+            Calendar photoTime = Calendar.getInstance();
+            photoTime.setTimeInMillis(lastModified);
 
-            // 设置时间为原始时间的下一个小时（时间段的结束时间）
-            int hour = originalCalendar.get(Calendar.HOUR_OF_DAY);
-            int nextHour = hour + 1; // 移除 % 24, 让Calendar自动处理进位
-            readCalendar.set(Calendar.HOUR_OF_DAY, nextHour);
-            readCalendar.set(Calendar.MINUTE, 0);
-            readCalendar.set(Calendar.SECOND, 0);
-            readCalendar.set(Calendar.MILLISECOND, 0); // 确保毫秒为0
-
-            // 如果当前时间 > 阅读时间的结束时间，计数加1
-            if (now.after(readCalendar)) {
+            // 如果照片时间 < 过期时间，计数加1
+            if (photoTime.before(expirationTime)) {
                 count++;
             }
         }
 
         return count;
+    }
+
+    /**
+     * 判断一个文件夹是否已到期
+     * 文件夹到期的定义：文件夹中至少有一张照片已经到期
+     * 到期判断：照片创建时间(lastModified) < (当前时间 - 3天)，按小时计算
+     * 例如：当前时间 2025/12/7 17:08，则 2025/12/4 17:00 之前创建的照片为已到期
+     *
+     * @param photos 文件夹中的照片列表
+     * @return 文件夹是否已到期
+     */
+    public boolean isFolderExpired(List<Photo> photos) {
+        if (photos == null || photos.isEmpty()) {
+            return false;
+        }
+
+        // 获取当前时间，并减去3天
+        Calendar expirationTime = Calendar.getInstance();
+        expirationTime.add(Calendar.DAY_OF_YEAR, -DELAY_DAYS);
+
+        // 将分钟、秒、毫秒设为0，按小时计算
+        expirationTime.set(Calendar.MINUTE, 0);
+        expirationTime.set(Calendar.SECOND, 0);
+        expirationTime.set(Calendar.MILLISECOND, 0);
+
+        for (Photo photo : photos) {
+            // 使用文件最后修改时间（即创建时间）
+            long lastModified = photo.getLastModified();
+            if (lastModified == 0) {
+                // 如果 lastModified 为 0，使用 dateAdded 作为备用
+                lastModified = photo.getDateAdded() * 1000;
+            }
+
+            Calendar photoTime = Calendar.getInstance();
+            photoTime.setTimeInMillis(lastModified);
+
+            // 如果照片时间 < 过期时间，说明已到期
+            if (photoTime.before(expirationTime)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

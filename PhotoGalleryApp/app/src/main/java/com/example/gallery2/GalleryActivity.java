@@ -228,7 +228,17 @@ public class GalleryActivity extends AppCompatActivity {
         photos = new ArrayList<>();
         PhotoManager photoManager = new PhotoManager(this);
 
-        if (isDateFolder) {
+        if ("expired".equals(folderName)) {
+            // 加载已到期的照片
+            List<Photo> allPhotos = photoManager.getAllPhotos();
+            for (Photo photo : allPhotos) {
+                List<Photo> singlePhotoList = new ArrayList<>();
+                singlePhotoList.add(photo);
+                if (photoManager.isFolderExpired(singlePhotoList)) {
+                    photos.add(photo);
+                }
+            }
+        } else if (isDateFolder) {
             // 加载日期文件夹中的照片（基于DATE_ADDED+3天）
             photos = photoManager.getPhotosForDate(folderName);
         } else {
