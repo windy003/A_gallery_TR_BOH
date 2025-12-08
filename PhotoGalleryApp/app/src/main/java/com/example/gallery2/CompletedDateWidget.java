@@ -58,7 +58,7 @@ public class CompletedDateWidget extends AppWidgetProvider {
         // 小米12 Pro 配置
         if (model.contains("2201122c") || model.contains("mi 12 pro") || model.contains("2201122")) {
             Log.d("CompletedDateWidget", "检测到小米12 Pro，使用小米12 Pro专用配置");
-            return new DeviceConfig(10f, 8f, 8f);
+            return new DeviceConfig(10f, 8f, 12f);
         }
 
         // 小米MIX Fold 2 配置
