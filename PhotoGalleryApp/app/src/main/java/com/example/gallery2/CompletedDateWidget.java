@@ -46,7 +46,7 @@ public class CompletedDateWidget extends AppWidgetProvider {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_completed_date);
 
         if (hasExpired) {
-            // 有过期文件夹：显示图片数量 "本机X个"
+            // 有过期文件夹：显示图片数量 "本机X个" 和检查时间
             views.setViewVisibility(R.id.widget_icon, android.view.View.GONE);
             views.setViewVisibility(R.id.widget_date_text, android.view.View.GONE);
 
@@ -54,11 +54,27 @@ public class CompletedDateWidget extends AppWidgetProvider {
             views.setTextViewText(R.id.widget_photo_count, countText);
             views.setViewVisibility(R.id.widget_photo_count, android.view.View.VISIBLE);
 
-            Log.d("CompletedDateWidget", "有过期文件夹，显示图片数量: " + photoCount);
+            // 显示检查时间
+            Calendar now = Calendar.getInstance();
+            int month = now.get(Calendar.MONTH) + 1;
+            int day = now.get(Calendar.DAY_OF_MONTH);
+            int hour = now.get(Calendar.HOUR_OF_DAY);
+            int minute = now.get(Calendar.MINUTE);
+
+            // 使用HTML标签，日期和分钟为绿色，小时为红色
+            String timeText = String.format(Locale.getDefault(),
+                "<font color='#00FF00'>%d/%d </font><font color='#FF0000'>%02d</font><font color='#00FF00'>:%02d</font>",
+                month, day, hour, minute);
+
+            views.setTextViewText(R.id.widget_check_time, android.text.Html.fromHtml(timeText, android.text.Html.FROM_HTML_MODE_LEGACY));
+            views.setViewVisibility(R.id.widget_check_time, android.view.View.VISIBLE);
+
+            Log.d("CompletedDateWidget", "有过期文件夹，显示图片数量: " + photoCount + "，检查时间: " + month + "/" + day + " " + hour + ":" + minute);
         } else {
             // 没有过期文件夹：显示当前时间，小时为红色
             views.setViewVisibility(R.id.widget_icon, android.view.View.GONE);
             views.setViewVisibility(R.id.widget_photo_count, android.view.View.GONE);
+            views.setViewVisibility(R.id.widget_check_time, android.view.View.GONE);
 
             // 获取当前时间
             Calendar now = Calendar.getInstance();
