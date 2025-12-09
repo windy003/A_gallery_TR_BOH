@@ -50,7 +50,7 @@ public class CompletedDateWidget extends AppWidgetProvider {
         // LG Wing 配置（两台）
         if (model.contains("wing") || model.contains("lm-f100")) {
             Log.d("CompletedDateWidget", "检测到LG Wing，使用LG Wing专用配置");
-            return new DeviceConfig(20f, 20f);  // 所有字体都调大
+            return new DeviceConfig(17f, 17f);  // 所有字体都调大
         }
 
         // 小米12 Pro 配置
