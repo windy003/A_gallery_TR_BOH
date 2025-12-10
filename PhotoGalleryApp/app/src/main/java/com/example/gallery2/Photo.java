@@ -5,7 +5,6 @@ import java.io.Serializable;
 
 public class Photo implements Serializable {
     public static final int TYPE_IMAGE = 1;
-    public static final int TYPE_VIDEO = 2;
 
     private long id;
     private String path;
@@ -13,22 +12,20 @@ public class Photo implements Serializable {
     private long dateAdded;
     private long lastModified; // 文件最后修改时间(毫秒)
     private long size;
-    private int mediaType; // 1=图片, 2=视频
-    private long duration; // 视频时长(毫秒)
+    private int mediaType; // 1=图片
     private transient Uri uri; // transient 因为 Uri 不能直接序列化
 
-    public Photo(long id, String path, String name, long dateAdded, long size, int mediaType, long duration) {
+    public Photo(long id, String path, String name, long dateAdded, long size, int mediaType) {
         this.id = id;
         this.path = path;
         this.name = name;
         this.dateAdded = dateAdded;
         this.size = size;
         this.mediaType = mediaType;
-        this.duration = duration;
         this.lastModified = 0; // 默认值
     }
 
-    public Photo(long id, String path, String name, long dateAdded, long lastModified, long size, int mediaType, long duration) {
+    public Photo(long id, String path, String name, long dateAdded, long lastModified, long size, int mediaType) {
         this.id = id;
         this.path = path;
         this.name = name;
@@ -36,7 +33,6 @@ public class Photo implements Serializable {
         this.lastModified = lastModified;
         this.size = size;
         this.mediaType = mediaType;
-        this.duration = duration;
     }
 
     public long getId() {
@@ -77,13 +73,5 @@ public class Photo implements Serializable {
 
     public int getMediaType() {
         return mediaType;
-    }
-
-    public boolean isVideo() {
-        return mediaType == TYPE_VIDEO;
-    }
-
-    public long getDuration() {
-        return duration;
     }
 }

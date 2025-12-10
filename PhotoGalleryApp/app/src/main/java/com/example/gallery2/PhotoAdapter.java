@@ -38,33 +38,17 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.PhotoViewHol
     public void onBindViewHolder(@NonNull PhotoViewHolder holder, int position) {
         Photo photo = photos.get(position);
 
-        // 加载缩略图
-        if (photo.isVideo()) {
-            // 视频：加载视频缩略图
-            Glide.with(context)
-                    .load(photo.getUri())
-                    .centerCrop()
-                    .into(holder.imageViewPhoto);
+        // 加载图片缩略图
+        Glide.with(context)
+                .load(new File(photo.getPath()))
+                .centerCrop()
+                .into(holder.imageViewPhoto);
 
-            // 显示播放图标
-            holder.imageViewPlayIcon.setVisibility(View.VISIBLE);
-
-            // 显示视频时长
-            if (photo.getDuration() > 0) {
-                holder.textViewDuration.setText(formatDuration(photo.getDuration()));
-                holder.textViewDuration.setVisibility(View.VISIBLE);
-            } else {
-                holder.textViewDuration.setVisibility(View.GONE);
-            }
-        } else {
-            // 图片
-            Glide.with(context)
-                    .load(new File(photo.getPath()))
-                    .centerCrop()
-                    .into(holder.imageViewPhoto);
-
-            // 隐藏视频相关元素
+        // 隐藏视频相关元素
+        if (holder.imageViewPlayIcon != null) {
             holder.imageViewPlayIcon.setVisibility(View.GONE);
+        }
+        if (holder.textViewDuration != null) {
             holder.textViewDuration.setVisibility(View.GONE);
         }
 
@@ -76,13 +60,6 @@ public class PhotoAdapter extends RecyclerView.Adapter<PhotoAdapter.PhotoViewHol
                 listener.onPhotoClick(position);
             }
         });
-    }
-
-    private String formatDuration(long milliseconds) {
-        int seconds = (int) (milliseconds / 1000);
-        int minutes = seconds / 60;
-        seconds = seconds % 60;
-        return String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds);
     }
 
     @Override

@@ -73,7 +73,7 @@ public class PhotoManager {
                         lastModified = dateAdded * 1000;
                     }
 
-                    Photo photo = new Photo(id, path, name, dateAdded, lastModified, size, Photo.TYPE_IMAGE, 0);
+                    Photo photo = new Photo(id, path, name, dateAdded, lastModified, size, Photo.TYPE_IMAGE);
                     photo.setUri(Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id)));
                     photos.add(photo);
                 }
@@ -85,77 +85,11 @@ public class PhotoManager {
     }
 
     /**
-     * 从MediaStore获取所有视频
-     */
-    private List<Photo> getVideos() {
-        List<Photo> videos = new ArrayList<>();
-        Uri uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        String[] projection = {
-                MediaStore.Video.Media._ID,
-                MediaStore.Video.Media.DATA,
-                MediaStore.Video.Media.DISPLAY_NAME,
-                MediaStore.Video.Media.DATE_ADDED,
-                MediaStore.Video.Media.SIZE,
-                MediaStore.Video.Media.DURATION
-        };
-
-        ContentResolver contentResolver = context.getContentResolver();
-        Cursor cursor = contentResolver.query(
-                uri,
-                projection,
-                null,
-                null,
-                MediaStore.Video.Media.DATE_ADDED + " DESC"
-        );
-
-        if (cursor != null) {
-            int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-            int pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
-            int nameColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
-            int dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED);
-            int sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE);
-            int durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
-
-            while (cursor.moveToNext()) {
-                long id = cursor.getLong(idColumn);
-                String path = cursor.getString(pathColumn);
-                String name = cursor.getString(nameColumn);
-                long dateAdded = cursor.getLong(dateColumn);
-                long size = cursor.getLong(sizeColumn);
-                long duration = cursor.getLong(durationColumn);
-
-                // 只扫描指定的两个目录
-                if (isInTargetDirectory(path)) {
-                    // 读取文件的最后修改时间
-                    long lastModified = 0;
-                    try {
-                        java.io.File file = new java.io.File(path);
-                        if (file.exists()) {
-                            lastModified = file.lastModified();
-                        }
-                    } catch (Exception e) {
-                        // 如果读取失败，使用 dateAdded 作为备用
-                        lastModified = dateAdded * 1000;
-                    }
-
-                    Photo video = new Photo(id, path, name, dateAdded, lastModified, size, Photo.TYPE_VIDEO, duration);
-                    video.setUri(Uri.withAppendedPath(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, String.valueOf(id)));
-                    videos.add(video);
-                }
-            }
-            cursor.close();
-        }
-
-        return videos;
-    }
-
-    /**
-     * 获取所有媒体文件（图片+视频）
+     * 获取所有媒体文件（仅图片）
      */
     public List<Photo> getAllPhotos() {
         List<Photo> allMedia = new ArrayList<>();
         allMedia.addAll(getImages());
-        allMedia.addAll(getVideos());
 
         // 按日期排序（最新的在前）
         allMedia.sort((p1, p2) -> Long.compare(p2.getDateAdded(), p1.getDateAdded()));
