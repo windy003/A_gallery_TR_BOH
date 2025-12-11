@@ -59,14 +59,15 @@ public class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.Im
         int screenWidth = context.getResources().getDisplayMetrics().widthPixels;
         int screenHeight = context.getResources().getDisplayMetrics().heightPixels;
 
-        // 限制最大尺寸：最大边不超过4096像素（适合5倍缩放）
-        // 同时保证不会超过Canvas绘制限制
-        int maxSize = Math.min(4096, Math.max(screenWidth, screenHeight) * 3);
+        // 限制最大尺寸：考虑5倍缩放，使用屏幕尺寸的5倍，但不超过8192（Canvas最大限制）
+        // 对于宽度和高度分别设置限制，避免正方形限制导致的问题
+        int maxWidth = Math.min(8192, screenWidth * 5);
+        int maxHeight = Math.min(8192, screenHeight * 5);
 
         Glide.with(context)
                 .asBitmap()
                 .load(new File(photo.getPath()))
-                .override(maxSize, maxSize)
+                .override(maxWidth, maxHeight)
                 .downsample(com.bumptech.glide.load.resource.bitmap.DownsampleStrategy.CENTER_INSIDE)
                 .format(com.bumptech.glide.load.DecodeFormat.PREFER_RGB_565)
                 .into(new CustomTarget<Bitmap>() {
