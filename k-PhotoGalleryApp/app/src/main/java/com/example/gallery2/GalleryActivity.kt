@@ -50,8 +50,7 @@ class GalleryActivity : AppCompatActivity() {
             // 加载已到期的照片
             val allPhotos = photoManager.getAllPhotos()
             for (photo in allPhotos) {
-                val singlePhotoList = listOf(photo)
-                if (photoManager.isFolderExpired(singlePhotoList)) {
+                if (photoManager.isPhotoExpired(photo)) {
                     photos.add(photo)
                 }
             }

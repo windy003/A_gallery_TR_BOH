@@ -74,8 +74,7 @@ class IconManager(private val context: Context) {
 
         // 遍历所有照片，检查是否有已过期的
         for (photo in allPhotos) {
-            val singlePhotoList = listOf(photo)
-            if (photoManager.isFolderExpired(singlePhotoList)) {
+            if (photoManager.isPhotoExpired(photo)) {
                 // 发现已过期的照片，未完成
                 return false
             }

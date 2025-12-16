@@ -150,10 +150,8 @@ class MainActivity : AppCompatActivity() {
 
         // 遍历所有图片，筛选出已到期的图片
         for (photo in allPhotos) {
-            val singlePhotoList = listOf(photo)
-
             // 检查这张照片是否已到期
-            if (photoManager.isFolderExpired(singlePhotoList)) {
+            if (photoManager.isPhotoExpired(photo)) {
                 // 输出调试信息
                 var lastModified = photo.lastModified
                 if (lastModified == 0L) {

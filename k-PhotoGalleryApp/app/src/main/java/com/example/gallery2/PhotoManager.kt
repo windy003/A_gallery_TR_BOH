@@ -108,15 +108,14 @@ class PhotoManager(private val context: Context) {
     }
 
     /**
-     * 检测是否有已到期的照片
+     * 判断单张照片是否已到期
      * 到期判断：照片创建时间(lastModified) < (当前时间 - 3天)，按小时计算
      * 例如：当前时间 2025/12/7 17:08，则 2025/12/4 17:00 之前创建的照片为已到期
      *
-     * @return 是否有过期的照片
+     * @param photo 要判断的照片
+     * @return 照片是否已到期
      */
-    fun hasExpiredFolders(): Boolean {
-        val allPhotos = getAllPhotos()
-
+    fun isPhotoExpired(photo: Photo): Boolean {
         // 获取当前时间，并减去3天
         val expirationTime = Calendar.getInstance()
         expirationTime.add(Calendar.DAY_OF_YEAR, -DELAY_DAYS)
@@ -126,24 +125,30 @@ class PhotoManager(private val context: Context) {
         expirationTime.set(Calendar.SECOND, 0)
         expirationTime.set(Calendar.MILLISECOND, 0)
 
-        for (photo in allPhotos) {
-            // 使用文件最后修改时间（即创建时间）
-            var lastModified = photo.lastModified
-            if (lastModified == 0L) {
-                // 如果 lastModified 为 0，使用 dateAdded 作为备用
-                lastModified = photo.dateAdded * 1000
-            }
-
-            val photoTime = Calendar.getInstance()
-            photoTime.timeInMillis = lastModified
-
-            // 如果照片时间 < 过期时间，说明有过期照片
-            if (photoTime.before(expirationTime)) {
-                return true
-            }
+        // 使用文件最后修改时间（即创建时间）
+        var lastModified = photo.lastModified
+        if (lastModified == 0L) {
+            // 如果 lastModified 为 0，使用 dateAdded 作为备用
+            lastModified = photo.dateAdded * 1000
         }
 
-        return false
+        val photoTime = Calendar.getInstance()
+        photoTime.timeInMillis = lastModified
+
+        // 如果照片时间 < 过期时间，说明已到期
+        return photoTime.before(expirationTime)
+    }
+
+    /**
+     * 检测是否有已到期的照片
+     * 到期判断：照片创建时间(lastModified) < (当前时间 - 3天)，按小时计算
+     * 例如：当前时间 2025/12/7 17:08，则 2025/12/4 17:00 之前创建的照片为已到期
+     *
+     * @return 是否有过期的照片
+     */
+    fun hasExpiredFolders(): Boolean {
+        val allPhotos = getAllPhotos()
+        return allPhotos.any { isPhotoExpired(it) }
     }
 
     /**
@@ -155,77 +160,7 @@ class PhotoManager(private val context: Context) {
      */
     fun getExpiredPhotoCount(): Int {
         val allPhotos = getAllPhotos()
-
-        // 获取当前时间，并减去3天
-        val expirationTime = Calendar.getInstance()
-        expirationTime.add(Calendar.DAY_OF_YEAR, -DELAY_DAYS)
-
-        // 将分钟、秒、毫秒设为0，按小时计算
-        expirationTime.set(Calendar.MINUTE, 0)
-        expirationTime.set(Calendar.SECOND, 0)
-        expirationTime.set(Calendar.MILLISECOND, 0)
-
-        var count = 0
-        for (photo in allPhotos) {
-            // 使用文件最后修改时间（即创建时间）
-            var lastModified = photo.lastModified
-            if (lastModified == 0L) {
-                // 如果 lastModified 为 0，使用 dateAdded 作为备用
-                lastModified = photo.dateAdded * 1000
-            }
-
-            val photoTime = Calendar.getInstance()
-            photoTime.timeInMillis = lastModified
-
-            // 如果照片时间 < 过期时间，计数加1
-            if (photoTime.before(expirationTime)) {
-                count++
-            }
-        }
-
-        return count
+        return allPhotos.count { isPhotoExpired(it) }
     }
 
-    /**
-     * 判断一个文件夹是否已到期
-     * 文件夹到期的定义：文件夹中至少有一张照片已经到期
-     * 到期判断：照片创建时间(lastModified) < (当前时间 - 3天)，按小时计算
-     * 例如：当前时间 2025/12/7 17:08，则 2025/12/4 17:00 之前创建的照片为已到期
-     *
-     * @param photos 文件夹中的照片列表
-     * @return 文件夹是否已到期
-     */
-    fun isFolderExpired(photos: List<Photo>?): Boolean {
-        if (photos.isNullOrEmpty()) {
-            return false
-        }
-
-        // 获取当前时间，并减去3天
-        val expirationTime = Calendar.getInstance()
-        expirationTime.add(Calendar.DAY_OF_YEAR, -DELAY_DAYS)
-
-        // 将分钟、秒、毫秒设为0，按小时计算
-        expirationTime.set(Calendar.MINUTE, 0)
-        expirationTime.set(Calendar.SECOND, 0)
-        expirationTime.set(Calendar.MILLISECOND, 0)
-
-        for (photo in photos) {
-            // 使用文件最后修改时间（即创建时间）
-            var lastModified = photo.lastModified
-            if (lastModified == 0L) {
-                // 如果 lastModified 为 0，使用 dateAdded 作为备用
-                lastModified = photo.dateAdded * 1000
-            }
-
-            val photoTime = Calendar.getInstance()
-            photoTime.timeInMillis = lastModified
-
-            // 如果照片时间 < 过期时间，说明已到期
-            if (photoTime.before(expirationTime)) {
-                return true
-            }
-        }
-
-        return false
-    }
 }
