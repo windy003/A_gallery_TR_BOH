@@ -59,13 +59,6 @@ class IconManager(private val context: Context) {
     }
 
     /**
-     * 获取公开的完成状态（供Widget使用）
-     */
-    fun isCompleted(): Boolean {
-        return prefs.getBoolean(KEY_IS_COMPLETED, false)
-    }
-
-    /**
      * 检查已过期文件夹是否为空
      * 如果已过期文件夹为空，说明没有需要处理的过期照片，返回true（已完成）
      */
