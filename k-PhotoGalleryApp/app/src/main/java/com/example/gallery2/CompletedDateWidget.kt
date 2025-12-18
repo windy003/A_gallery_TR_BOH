@@ -103,7 +103,7 @@ class CompletedDateWidget : AppWidgetProvider() {
 
                 val timeText = String.format(
                     Locale.getDefault(),
-                    "<font color='#00FF00'>%d/%d </font><font color='#FF0000'>%02d</font><font color='#00FF00'>:%02d</font>",
+                    "<font color='#00FF00'>%d/%d </font><font color='#00FF00'>%02d</font><font color='#00FF00'>:</font><font color='#FF0000'>%02d</font>",
                     month, day, hour, minute
                 )
 
@@ -137,7 +137,7 @@ class CompletedDateWidget : AppWidgetProvider() {
 
                 val timeText = String.format(
                     Locale.getDefault(),
-                    "<font color='#00FF00'>%d/%d </font><font color='#FF0000'>%02d</font><font color='#00FF00'>:%02d</font>",
+                    "<font color='#00FF00'>%d/%d </font><font color='#00FF00'>%02d</font><font color='#00FF00'>:</font><font color='#FF0000'>%02d</font>",
                     month, day, hour, minute
                 )
 
